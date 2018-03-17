@@ -219,6 +219,7 @@ public:
         string line;
         num_vertices = 0;
         num_faces = 0;
+        centre = pos;
         while(getline(objstream,line)){
             if(line.c_str()[0] == '#')
                 continue;
@@ -244,9 +245,7 @@ public:
                 cout << vertex.x << " " << vertex.y << " " << vertex.z << endl;
             }
 
-            centre.x = (maxX + minX)/2 + pos.x;
-            centre.y = (maxY + minY)/2 + pos.y;
-            centre.z = (maxZ + minZ)/2 + pos.x;
+            
 
             if(line.c_str()[0] == 'f' && line.c_str()[1] == ' '){
                 stringstream s(line);
@@ -852,9 +851,9 @@ void raycast(mesh mymesh, Vec3f cam, string filename){
 
 
 int main(){
-    string meshname("apple2.obj");
+    string meshname("apple20.obj");
     Vec3i col(255,255,0);
-    Vec3f pos(300,250,-150);
+    Vec3f pos(200,150,-150);
     mesh mymesh(meshname,col,pos,1000);
     Cube mycube(pos,200);
     Vec3f cam(250,250,250);
@@ -863,7 +862,7 @@ int main(){
     light.z = -50;
     string output("out.ppm");
 
-    // raycast(mymesh,cam,output);
+    raycast(mymesh,cam,output);
 
     double x1,x2,x3;
     double thetaX = 0,thetaY = 0,thetaZ =0;
@@ -879,8 +878,7 @@ int main(){
 		cout << "Plotting " << cppname << endl;
         
 		mesh temp = mesh(mymesh,thetaX,thetaY,thetaZ);
-        if(i > 40 and i <= 60)
-		    raycast(temp,cam,cppname);
+		raycast(temp,cam,cppname);
 		theta += dtheta;
 		x1 =  cos(theta);
 		x2 =  sin(2*theta);
