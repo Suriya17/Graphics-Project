@@ -479,12 +479,6 @@ bool find(Vec3f cam, Vec3f pix, Plane myface, Cube cube,int facid){
     return false;
 }
 
-
-bool find(){
-
-}
-
-
 bool find(Vec3f cam, Vec3f pix, face3 triface, mesh mymesh ,int facid){
     double t1 = (pix - cam).dot(triface.normal);
     int i = pix.x;
@@ -674,6 +668,8 @@ void raycast(mesh mymesh, Vec3f cam, string filename){
             bool isColored = false;
             for(int k = 0; k < mymesh.num_faces;k++){
                 if(visible_faces[k]){
+                    if(i == 200 and j == 200)
+                    cout << "face " << k << endl;
                     bool tmp = find(cam,pix,mymesh.faces[k],mymesh,k);
                     isColored = tmp or isColored;
                 }
@@ -858,35 +854,35 @@ int main(){
     Cube mycube(pos,200);
     Vec3f cam(250,250,250);
     light.x = 250;
-    light.y = 250;
+    light.y = 450;
     light.z = -50;
     string output("out.ppm");
 
     raycast(mymesh,cam,output);
 
-    double x1,x2,x3;
-    double thetaX = 0,thetaY = 0,thetaZ =0;
-    double magnitude;
-    double dtheta = 0.05;
-    double theta = 0;
+    // double x1,x2,x3;
+    // double thetaX = 0,thetaY = 0,thetaZ =0;
+    // double magnitude;
+    // double dtheta = 0.05;
+    // double theta = 0;
 
-    for (int i = 0; i < 100; ++i)
-	{
-        char name[20];
-		sprintf(name,"cube%03d.ppm",i+1);
-		string cppname(name);
-		cout << "Plotting " << cppname << endl;
+    // for (int i = 0; i < 100; ++i)
+	// {
+    //     char name[20];
+	// 	sprintf(name,"cube%03d.ppm",i+1);
+	// 	string cppname(name);
+	// 	cout << "Plotting " << cppname << endl;
         
-		mesh temp = mesh(mymesh,thetaX,thetaY,thetaZ);
-		raycast(temp,cam,cppname);
-		theta += dtheta;
-		x1 =  cos(theta);
-		x2 =  sin(2*theta);
-		x3 =  sin(3*theta);
-		magnitude = sqrt(x1*x1 + x2*x2 + x3*x3);
-		thetaX = acos(x1/magnitude);
-		thetaY = acos(x2/magnitude);
-		thetaZ = acos(x3/magnitude);
-	}
+	// 	mesh temp = mesh(mymesh,thetaX,thetaY,thetaZ);
+	// 	raycast(temp,cam,cppname);
+	// 	theta += dtheta;
+	// 	x1 =  cos(theta);
+	// 	x2 =  sin(2*theta);
+	// 	x3 =  sin(3*theta);
+	// 	magnitude = sqrt(x1*x1 + x2*x2 + x3*x3);
+	// 	thetaX = acos(x1/magnitude);
+	// 	thetaY = acos(x2/magnitude);
+	// 	thetaZ = acos(x3/magnitude);
+	// }
     // raycast(mycube,cam,output);
 }
