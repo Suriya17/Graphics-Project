@@ -6,6 +6,7 @@ double hsvraster[WALL_SIDE+1][WALL_SIDE+1][3];
 double zBuffer[WALL_SIDE+1][WALL_SIDE+1];
 double Ka = 0.03, Ia = 0.5, Kd = 1, Ip = 1000, Ks = 1, specN = 40,c1 = 1, c2 = 1, c3 = 1;
 map<pair<int,int>,double> hsImap;
+bool CrossShadows = false;
 
 struct color{
     int R, G, B;
@@ -120,10 +121,14 @@ bool getIntersection(Vec3f p1, Vec3f p2, Vec3f &pt ,meshPlane &face, mesh &paren
 bool getIntersection(Vec3f p1, Vec3f p2, Vec3f &pt, Wall &w);
 void make_ppm(string &filename);
 void NormaliseV();
+bool ShadowCheckIntersection(Vec3f &light, Vec3f pt, int faceInd,mesh &parent_mesh);
+bool ShadowCheckIntersection(Vec3f &light, Vec3f pt, mesh &parent_mesh);
 double illuminatePoint(Vec3f &pt, Vec3f &cam, Vec3f &light,int faceInd, mesh &parent_mesh);
 double illuminatePoint(Vec3f &pt, Vec3f &cam, Vec3f &light,Wall &w, mesh &parent_mesh, int wallInd);
+double illuminatePoint(Vec3f &pt, Vec3f &cam, Vec3f &light,int faceInd, int meshIndex, vector<mesh> &meshes);
+double illuminatePoint(Vec3f &pt, Vec3f &cam, Vec3f &light,Wall &w, vector<mesh> &meshes, int wallInd);
 void raycast(mesh &mymesh,Vec3f cam, Vec3f light, string &filename);
-
+void raycast(vector<mesh> &meshes,Vec3f cam, Vec3f light, string &filename);
 
 
 

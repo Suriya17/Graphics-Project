@@ -250,11 +250,52 @@ double illuminatePoint(Vec3f &pt, Vec3f &cam, Vec3f &light,int faceInd, mesh &pa
     if(specular < 0)
     //     cout << "BAMM!!" << endl;
         specular = 0;
-    double ans =  ambient + max(diffusion + specular,0.0);
+    double ans =  ambient + diffusion + specular;
 
     return ans;
 
 }
+
+double illuminatePoint(Vec3f &pt, Vec3f &cam, Vec3f &light,int faceInd, int meshIndex, vector<mesh> &meshes){
+    double ambient = Ka * Ia;
+    Vec3f n = meshes[meshIndex].faces[faceInd].n;
+    Vec3f l = (light - pt).normalize();
+    Vec3f v = (cam - pt).normalize();
+    double dist = (cam - pt).length();
+    double fatt = min(1.0,1/(c1 + c2 * dist + c3 *dist*dist));
+    double diffusion = Kd * Ip * fatt * l.dot(n);
+
+    if(diffusion < 0)
+        diffusion = 0;
+    double specular = Ks * Ip * fatt * pow(((2 * l.dot(n) * v.dot(n)) - l.dot(v)),specN);
+    if(specular < 0)
+        specular = 0;
+    double ans;
+
+    if(!CrossShadows){
+        ans =  ambient + diffusion + specular;
+        return ans;
+    }
+
+    int f = 1;
+    for(int i = 0; i < meshes.size(); i++){
+        if(i != meshIndex and ShadowCheckIntersection(light,pt,meshes[i])){
+            f = 0;
+            break;
+        }
+    }
+
+    ans = ambient + f * (diffusion + specular);
+    return ans;
+    
+}
+
+
+/**
+ * Function called by illuminatePoint function
+ * Checks any of the faces except the face the point is on
+ * obstructs light
+ */
 
 bool ShadowCheckIntersection(Vec3f &light, Vec3f pt, int faceInd,mesh &parent_mesh){
     double t1,t2,t;
@@ -275,6 +316,20 @@ bool ShadowCheckIntersection(Vec3f &light, Vec3f pt, int faceInd,mesh &parent_me
     return false;
 }
 
+
+bool ShadowCheckIntersection(Vec3f &light, Vec3f pt, mesh &parent_mesh){
+    for(int i = 0; i < parent_mesh.num_faces; i++){
+        if(ShadowCheckIntersection(light,pt,-1,parent_mesh))
+            return true;
+    }
+    return false;
+}
+/**
+ * To illuminate a point on a wall, when a single mesh is present
+ * Finds if the light intersects the mesh on its way from source 
+ * to that point and illuminates appropriately
+ */
+
 double illuminatePoint(Vec3f &pt, Vec3f &cam, Vec3f &light,Wall &w, mesh &parent_mesh, int wallInd){
     double ambient = Ka * Ia;
     Vec3f n = w.n;
@@ -283,7 +338,6 @@ double illuminatePoint(Vec3f &pt, Vec3f &cam, Vec3f &light,Wall &w, mesh &parent
     double dist = (cam - pt).length();
     double fatt = min(1.0,1/(c1 + c2 * dist + c3 *dist*dist));
     double diffusion = Kd * Ip * fatt * l.dot(n);
-    diffusion = max(0.0,diffusion);
     if(diffusion < 0)
         diffusion = 0;
     //     cout << "BAMM!" << endl;
@@ -292,13 +346,7 @@ double illuminatePoint(Vec3f &pt, Vec3f &cam, Vec3f &light,Wall &w, mesh &parent
     //     cout << "BAMM!!" << endl;
         specular = 0.0;
     int f = 1;
-    Vec3f tmp;
-    // for(int i = 0; i < parent_mesh.num_faces; i++){
-    //     if(getIntersection(pt,light,tmp,parent_mesh.faces[i],parent_mesh)){
-    //         f = 0;
-    //         break;
-    //     }
-    // }
+    
     if(ShadowCheckIntersection(light,pt,-1,parent_mesh)){
         f = 0;
     }
@@ -309,7 +357,45 @@ double illuminatePoint(Vec3f &pt, Vec3f &cam, Vec3f &light,Wall &w, mesh &parent
 
 }
 
+/**
+ * To illuminate a point on a wall, when multiple meshes are present
+ * Finds if the light intersects any of the meshes on its way from source
+ * to that point and illuminates appropriately
+ */
 
+double illuminatePoint(Vec3f &pt, Vec3f &cam, Vec3f &light,Wall &w, vector<mesh> &meshes, int wallInd){
+    double ambient = Ka * Ia;
+    Vec3f n = w.n;
+    Vec3f l = (light - pt).normalize();
+    Vec3f v = (cam - pt).normalize();
+    double dist = (cam - pt).length();
+    double fatt = min(1.0,1/(c1 + c2 * dist + c3 *dist*dist));
+    double diffusion = Kd * Ip * fatt * l.dot(n);
+    if(diffusion < 0)
+        diffusion = 0;
+
+    double specular = Ks * Ip * fatt * pow(((2 * l.dot(n) * v.dot(n)) - l.dot(v)),specN);
+
+    if(specular < 0)
+        specular = 0.0;
+    
+    int f = 1;
+
+    for(int i = 0; i < meshes.size(); i++){
+        if(ShadowCheckIntersection(light,pt,-1,meshes[i])){
+            f = 0;
+            break;
+        }
+    }
+
+    double ans =  ambient + f * max(diffusion + specular,0.0);
+
+    return ans;
+}
+
+/**
+ * Finds intersection point of a ray with a plane
+ */
 
 Vec3f IntersectionPoint(Vec3f pix, Vec3f cam, Wall &w){
     double t1 = (pix - cam).dot(w.n);
@@ -322,6 +408,9 @@ Vec3f IntersectionPoint(Vec3f pix, Vec3f cam, Wall &w){
     return pt;
 }
 
+/**
+ * Finds intersection point of a ray with a plane( a face in the mesh)
+ */
 Vec3f IntersectionPoint(Vec3f pix, Vec3f cam, int k, mesh &parent_mesh){
     double t1 = (pix - cam).dot(parent_mesh.faces[k].n);
     if(t1 == 0)
@@ -345,13 +434,7 @@ void raycast(mesh &mymesh,Vec3f cam, Vec3f light, string &filename){
             Vec3f pt;
             bool isObject = false;
             for(int k = 0; k < mymesh.num_faces; k++){
-                // if(visible_faces[k] and getIntersection(pix,cam,pt,mymesh.faces[k],mymesh)){
-                //     isObject = true;
-                //     cout << "Yo  " << mymesh.faces[k].col.R << endl;
-                //     double fR = mymesh.faces[k].col.R/255.0, fG = mymesh.faces[k].col.G/255.0, fB = mymesh.faces[k].col.B/255.0;
-                //     RGBtoHSV(fR,fG,fB,hsvraster[i][j][0],hsvraster[i][j][1],hsvraster[i][j][2]);
-                //     hsvraster[i][j][2] = illuminatePoint(pt,cam,light,k,mymesh);
-                // }
+                
                 if(visible_faces[k]){
                     pt = IntersectionPoint(pix,cam,k,mymesh);
                     if(isOnFace(pt,mymesh.faces[k],mymesh) && zBuffer[i][j] < pt.z){
@@ -360,8 +443,7 @@ void raycast(mesh &mymesh,Vec3f cam, Vec3f light, string &filename){
                         // cout << "Yo  " << k << endl;
                         double fR = mymesh.faces[k].col.R/255.0, fG = mymesh.faces[k].col.G/255.0, fB = mymesh.faces[k].col.B/255.0;
                         RGBtoHSV(fR,fG,fB,hsvraster[i][j][0],hsvraster[i][j][1],hsvraster[i][j][2]);
-                        hsvraster[i][j][2] = illuminatePoint(pt,cam,light,k,mymesh);
-                        
+                        hsvraster[i][j][2] = illuminatePoint(pt,cam,light,k,mymesh);                        
                     }
                 }
             }
@@ -387,6 +469,60 @@ void raycast(mesh &mymesh,Vec3f cam, Vec3f light, string &filename){
     make_ppm(filename);
 }
 
+void raycast(vector<mesh> &meshes,Vec3f cam, Vec3f light, string &filename){
+    int no_faces = 0, offset = 0;
+    for(int i = 0; i < meshes.size();i++)
+        no_faces += meshes[i].num_faces;
+    init_bufs();
+    bool visible_faces[no_faces];
+    for(int i = 0; i < meshes.size();i++){
+        backface_culling(meshes[i],cam,visible_faces + offset);
+        offset = offset + meshes[i].num_faces;
+    }
+
+    for(int i = 0; i <= WALL_SIDE; i++){
+        for(int j = 0; j <= WALL_SIDE; j++){
+            Vec3f pix(i,j,0);
+            Vec3f pt;
+            bool isObject = false;
+            offset = 0;
+            for(int k = 0; k < meshes.size(); k++){
+                for(int l = 0; l < meshes[k].num_faces; l++){
+                    if(visible_faces[offset + l]){
+                        pt = IntersectionPoint(pix,cam,l,meshes[k]);
+                        if(isOnFace(pt,meshes[k].faces[l],meshes[k]) && zBuffer[i][j] < pt.z){
+                            zBuffer[i][j] = pt.z;
+                            isObject = true;
+                            double fR = meshes[k].faces[l].col.R/255.0, fG = meshes[k].faces[l].col.G/255.0, fB = meshes[k].faces[l].col.B/255.0;
+                            RGBtoHSV(fR,fG,fB,hsvraster[i][j][0],hsvraster[i][j][1],hsvraster[i][j][2]);
+                            hsvraster[i][j][2] = illuminatePoint(pt,cam,light,l,k,meshes);
+                        }
+                    }
+                }
+                offset += meshes[k].num_faces;
+            }
+
+            if(isObject)
+                continue;
+
+            for(int k = 0; k < 5; k++){                  
+                pt = IntersectionPoint(pix,cam,walls[k]);
+                if(isOnFace(pt,walls[k]) && zBuffer[i][j] < pt.z){
+                    // cout << "WALL " << k << endl;
+                    zBuffer[i][j] = pt.z;
+                    double fR = walls[k].col.R/255.0, fG = walls[k].col.G/255.0, fB = walls[k].col.B/255.0;
+                    RGBtoHSV(fR,fG,fB,hsvraster[i][j][0],hsvraster[i][j][1],hsvraster[i][j][2]);
+                    hsvraster[i][j][2] = illuminatePoint(pt,cam,light,walls[k],meshes,k);
+                }
+            }
+            
+        }
+    }
+    NormaliseV();
+    make_ppm(filename);
+}
+
+
 void make_ppm(string &filename){
     ofstream file;
 	file.open(filename.c_str());
@@ -408,14 +544,37 @@ void make_ppm(string &filename){
 }
 
 int main(){
-    string meshname("airplane.obj");
+    string meshname("cube.obj");
     color col;
     col.R = 128; col.G = 10;col.B = 128;
-    Vec3f cen(250, 250, -100);
+    Vec3f cen(100, 100, -100);
     Vec3f cam(250, 250, 250);
-    Vec3f light(250,250,-10);
-    mesh mymesh(meshname,col,cen,0.2);
+    Vec3f light(100,100,-10);
+    mesh mymesh(meshname,col,cen,70);
+    vector<mesh> meshes;
+    meshes.push_back(mymesh);
+    meshname = "cube.obj";
+
+    cen.x = 400; cen.y = 400;
+    col.R = 0; col.G = 10;col.B = 128;
+    mesh mymesh2(meshname,col,cen,70);
+    meshes.push_back(mymesh2);
+
+    cen.x = 100; cen.y = 400;
+    col.R = 128; col.G = 10;col.B = 0;
+    mesh mymesh3(meshname,col,cen,70);
+    meshes.push_back(mymesh3);
+
+    cen.x = 400; cen.y = 100;
+    col.R = 128; col.G = 100;col.B = 255;
+    mesh mymesh4(meshname,col,cen,70);
+    meshes.push_back(mymesh4);
+
     string output("out.ppm");
+    // raycast(mymesh2,cam,light,output);
+    raycast(meshes,cam,light,output);
+
+    
     // raycast(mymesh,cam,light,output);
 
     double x1,x2,x3;
@@ -424,7 +583,7 @@ int main(){
     double dtheta = 0.05;
     double theta = 0;
 
-
+    vector<mesh> temp;
 
     for (int i = 0; i < 100; ++i)
 	{
@@ -432,9 +591,11 @@ int main(){
 		sprintf(name,"cube%03d.ppm",i+1);
 		string cppname(name);
 		cout << "Plotting " << cppname << endl;
-        
-		mesh temp = mesh(mymesh,thetaX,thetaY,thetaZ);
+        for(int j = 0; j < meshes.size(); j++){
+		    temp.push_back(mesh(meshes[j],thetaX,thetaY,thetaZ));
+        }
 		raycast(temp,cam,light,cppname);
+        temp.clear();
 		theta += dtheta;
 		x1 =  cos(theta);
 		x2 =  sin(2*theta);
