@@ -546,30 +546,34 @@ void make_ppm(string &filename){
 int main(){
     string meshname("cube.obj");
     color col;
-    col.R = 128; col.G = 10;col.B = 128;
-    Vec3f cen(100, 100, -100);
-    Vec3f cam(250, 250, 250);
-    Vec3f light(100,100,-10);
-    mesh mymesh(meshname,col,cen,70);
+    int img_cnt;
+    Vec3f cam,light,cen;
+    cout<<"Enter the no of meshes in the scene : ";
+    cin>>img_cnt;
+
+    cout<<"Enter camera x,y,z coordinates : ";
+    cin>>cam.x>>cam.y>>cam.z;
+
+    cout<<"Enter light x,y,z coordinates : ";
+    cin>>light.x>>light.y>>light.z;
+    
     vector<mesh> meshes;
-    meshes.push_back(mymesh);
-    meshname = "cube.obj";
-
-    cen.x = 400; cen.y = 400;
-    col.R = 0; col.G = 10;col.B = 128;
-    mesh mymesh2(meshname,col,cen,70);
-    meshes.push_back(mymesh2);
-
-    cen.x = 100; cen.y = 400;
-    col.R = 128; col.G = 10;col.B = 0;
-    mesh mymesh3(meshname,col,cen,70);
-    meshes.push_back(mymesh3);
-
-    cen.x = 400; cen.y = 100;
-    col.R = 128; col.G = 100;col.B = 255;
-    mesh mymesh4(meshname,col,cen,70);
-    meshes.push_back(mymesh4);
-
+    
+    int i=0,scale_factor;
+    while(i++<img_cnt)
+    {
+        cout<<"Enter the name of obj file for object "<<i<<" : ";
+        cin>>meshname;
+        cout<<"Enter x,y,z co-ordinates of object center : ";
+        cin>>cen.x>>cen.y>>cen.z;
+        cout<<"Enter the colour of the object(R G B) : ";
+        cin>>col.R>>col.G>>col.B;
+        cout<<"Scale Factor : ";
+        cin>>scale_factor;
+        mesh mymesh(meshname,col,cen,scale_factor);
+        meshes.push_back(mymesh);
+    }
+    
     string output("out.ppm");
     // raycast(mymesh2,cam,light,output);
     raycast(meshes,cam,light,output);
@@ -588,7 +592,7 @@ int main(){
     for (int i = 0; i < 100; ++i)
 	{
         char name[20];
-		sprintf(name,"cube%03d.ppm",i+1);
+		sprintf(name,"out%03d.ppm",i+1);
 		string cppname(name);
 		cout << "Plotting " << cppname << endl;
         for(int j = 0; j < meshes.size(); j++){
