@@ -1,14 +1,14 @@
 #include "colorlib.h"
-#define WALL_SIDE 499
+#define WALL_SIDE 499   // Dimensions of the room and pixel raster
 
 int raster[WALL_SIDE+1][WALL_SIDE+1][3];
 double hsvraster[WALL_SIDE+1][WALL_SIDE+1][3];
 double zBuffer[WALL_SIDE+1][WALL_SIDE+1];
-double Ka = 0.03, Ia = 0.5, Kd = 1, Ip = 1000, Ks = 1, specN = 40,c1 = 1, c2 = 1, c3 = 1;
-map<pair<int,int>,double> hsImap;
-bool CrossShadows = false;
+double Ka = 0.03, Ia = 0.5, Kd = 1, Ip = 1000, Ks = 1, specN = 40,c1 = 1, c2 = 1, c3 = 1;  // Iluumination constants
+map<pair<int,int>,double> hsImap;           // HS hashmap for intensity normalization
+bool CrossShadows = false;                  // If shadow of one image should be cast on another
 
-struct color{
+struct color{                               // struct for color
     int R, G, B;
 };
 
@@ -20,7 +20,7 @@ inline int minimum(int a, int b, int c, int d){
     return min(min(min(a,b),c),d);
 }
 
-template<typename T>
+template<typename T>                    // A vector template
 class Vec3
 {
 public:
@@ -65,11 +65,13 @@ Vec3f rotateY(Vec3f p, double theta);
 Vec3f rotateZ(Vec3f p, double theta);
 Vec3f unit_cross_product(Vec3f v1, Vec3f v2);
 
+
+// A wall class
 class Wall{
     public:
-        Vec3f a, b, c, d;
-        Vec3f n;
-        color col;
+        Vec3f a, b, c, d;           // four vertices
+        Vec3f n;                    // normal vector
+        color col;                  // color of the wall
     Wall(){}
     Wall(Vec3f aa, Vec3f bb, Vec3f cc, Vec3f dd, int RR, int GG, int BB) : a(aa), b(bb), c(cc), d(dd){
         n = unit_cross_product(a-b,b-c);
@@ -78,7 +80,7 @@ class Wall{
         col.B = BB;
     }
 };
-
+// All the walls of the room are declared here
 Wall back_wall(Vec3f(0,0,-WALL_SIDE), Vec3f(WALL_SIDE,0,-WALL_SIDE), Vec3f(WALL_SIDE,WALL_SIDE,-WALL_SIDE), Vec3f(0,WALL_SIDE,-WALL_SIDE),128,128,128);
 Wall up_wall(Vec3f(0,WALL_SIDE,0), Vec3f(0,WALL_SIDE,-WALL_SIDE), Vec3f(WALL_SIDE,WALL_SIDE,-WALL_SIDE), Vec3f(WALL_SIDE,WALL_SIDE,0),0,0,200);
 Wall down_wall(Vec3f(0,0,0), Vec3f(WALL_SIDE,0,0), Vec3f(WALL_SIDE,0,-WALL_SIDE), Vec3f(0,0,-WALL_SIDE),0,0,200);
@@ -87,12 +89,14 @@ Wall right_wall(Vec3f(WALL_SIDE,0,0), Vec3f(WALL_SIDE,WALL_SIDE,0), Vec3f(WALL_S
 
 Wall walls[5] = {back_wall,up_wall,down_wall,left_wall,right_wall};
 
+// A face in the triangular mesh
+
 class meshPlane
 {
     public:
-        int a, b, c;
-        Vec3f n;
-        color col;
+        int a, b, c;            // three vertices numbers in parent mesh
+        Vec3f n;                // normal
+        color col;              // color
 
         meshPlane(){}
         meshPlane(int aa, int bb, int cc, int RR, int GG, int BB) : a(aa), b(bb), c(cc){
@@ -102,11 +106,13 @@ class meshPlane
         }    
 };
 
+// mesh class
+
 class mesh{
     public:
-        vector<Vec3f> vertices;
-        vector<meshPlane> faces;
-        Vec3f centre;
+        vector<Vec3f> vertices;                     // vertices
+        vector<meshPlane> faces;                    // faces
+        Vec3f centre;                               // center
         int num_vertices,num_faces;
         double maxX = -1e5,maxY = -1e5,maxZ = -1e5;
         double minX = 1e5,minY = 1e5,minZ = 1e5;
