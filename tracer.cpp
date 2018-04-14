@@ -1,5 +1,9 @@
 #include "tracer.h"
 
+/**
+ * Functions to rotate a point around origin
+ */
+
 Vec3f rotateX(Vec3f p, double theta){
     Vec3f ans;
 	ans.y = cos(theta)*p.y - sin(theta)*p.z;
@@ -23,10 +27,16 @@ Vec3f rotateZ(Vec3f p, double theta){
 	ans.z = p.z;
 	return ans;
 }
-
+/**
+ * To check if angle b/w two vecs is obtuse
+ */
 inline bool isObtuse(Vec3f a, Vec3f v){
     return ((a.x * v.x + a.y * v.y + a.z * v.z) < 0);
 }
+
+/**
+ * Returns normalized cross product of two vectors
+ */
 
 Vec3f unit_cross_product(Vec3f v1, Vec3f v2){
     Vec3f ans;
@@ -37,6 +47,11 @@ Vec3f unit_cross_product(Vec3f v1, Vec3f v2){
     ans.normalize();
     return ans;
 }
+
+/**
+ * Constructor to create a mesh from obj file
+ * scaled by the scale_factor
+ */
 
 mesh::mesh(string objfile, color col, Vec3f cen, double scale_factor){
     ifstream objstream(objfile.c_str());
@@ -80,14 +95,14 @@ mesh::mesh(string objfile, color col, Vec3f cen, double scale_factor){
 
     objstream.close();
     
-    Vec3f cen1((maxX + minX)/2,(maxY + minY)/2,(maxZ + minZ)/2);
+    Vec3f cen1((maxX + minX)/2,(maxY + minY)/2,(maxZ + minZ)/2);    // Centre is taken to be avg of max and min along each direction
     cout << "centre :";
     cen1.print();
-    Vec3f disp = centre - cen1;
+    Vec3f disp = centre - cen1;                                     // Move the centre to desired location
     disp.print();
     cout << "Min Z" << maxZ << endl;
     for(int i = 0; i < vertices.size();i++){
-        vertices[i] = vertices[i] + disp;
+        vertices[i] = vertices[i] + disp;                           // Move all the vertices
         // cout << vertices[i].x << " " << vertices[i].y << " " << vertices[i].z << endl;
     }
 
@@ -96,6 +111,13 @@ mesh::mesh(string objfile, color col, Vec3f cen, double scale_factor){
 
 }
 
+/**
+ * Constructor for a mesh class
+ * Takes in a parent mesh, rotates it by thetaZ around Z axis
+ * then thetaY around Y axis,
+ * and then thetaX around X axis
+ * Rotated around the center of the mesh
+ */
 mesh::mesh(mesh &originalMesh,double &thetaX, double &thetaY, double &thetaZ){
     centre = originalMesh.centre;
     for (int i = 0; i < originalMesh.num_vertices; ++i){
@@ -114,7 +136,10 @@ mesh::mesh(mesh &originalMesh,double &thetaX, double &thetaY, double &thetaZ){
     num_vertices = vertices.size();
 }
 
-
+/**
+ * Function to check if intersection point is on the triangle face
+ * Barycentric coordinates are computed and it's checked if they sum up to 1
+ */
 bool isOnFace(Vec3f &pt, meshPlane &face, mesh &parent_mesh){
     Vec3f v0 = parent_mesh.vertices[face.c] - parent_mesh.vertices[face.a];
     Vec3f v1 = parent_mesh.vertices[face.b] - parent_mesh.vertices[face.a];
@@ -128,11 +153,16 @@ bool isOnFace(Vec3f &pt, meshPlane &face, mesh &parent_mesh){
 
     double invDenom = 1/(dot11*dot00 -dot01*dot01);
 
-    double u = (dot11 * dot02 - dot01 * dot12) * invDenom;
-    double v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+    double u = (dot11 * dot02 - dot01 * dot12) * invDenom;              // pt = (1-u-v)a + u*c + v*b 
+    double v = (dot00 * dot12 - dot01 * dot02) * invDenom;              // pt is on face if u > 0 and v > 0 and u + v < 1
 
-    return (u > -1e-5) and (v > -1e-5) and (u + v < 1+1e-5);
+    return (u > -1e-5) and (v > -1e-5) and (u + v < 1+1e-5);            // 1e-5 is the tolerance because we're using double computations
 }
+
+/**
+ * Function to check if intersection point is on the square face
+ * Idea - magnitude of product of (line joining center and the point) and sides is less than the side 
+ */
 
 bool isOnFace(Vec3f &pt, Wall &w){
     Vec3f P1_P4 = w.a - w.d;
@@ -142,12 +172,18 @@ bool isOnFace(Vec3f &pt, Wall &w){
         (P1_P4.dot(TWO_P_C - P1_P4) <= 1e-5 && P1_P4.dot(TWO_P_C + P1_P4) >= -1e-5);
 }
 
+/**
+ * Function to get intersection point of a ray with a face of a mesh
+ * returns true is there is an intersection, false otherwise
+ * The intersection point is stored in the Vec3f pt passed to the function
+ */
+
 bool getIntersection(Vec3f p1, Vec3f p2, Vec3f &pt, meshPlane &face, mesh &parent_mesh){
     double t1 = (p1 - p2).dot(face.n);
 
     if(t1 == 0)
         return false;
-    
+    // arbpt - an arbitrary point on that plane, here it is taken as the centroid
     Vec3f arbpt = (parent_mesh.vertices[face.a] + parent_mesh.vertices[face.b] + parent_mesh.vertices[face.c])/3.0;
     double t2 = (arbpt - p1).dot(face.n);
     double t = t2/t1;
@@ -159,6 +195,12 @@ bool getIntersection(Vec3f p1, Vec3f p2, Vec3f &pt, meshPlane &face, mesh &paren
         return true;
     return false;
 }
+
+/**
+ * Function to get intersection point of a ray with a wall
+ * returns true is there is an intersection, false otherwise
+ * The intersection point is stored in the Vec3f pt passed to the function
+ */
 
 bool getIntersection(Vec3f p1, Vec3f p2, Vec3f &pt, Wall &w){
     double t1 = (p1 - p2).dot(w.n);
@@ -178,6 +220,10 @@ bool getIntersection(Vec3f p1, Vec3f p2, Vec3f &pt, Wall &w){
     return false;
 }
 
+/**
+ * A helper function to reset the arrays
+ */
+
 void init_bufs(){
     std::memset(raster, 0, sizeof(raster));
     for(int i = 0; i <= WALL_SIDE; i++){
@@ -186,6 +232,11 @@ void init_bufs(){
         }
     }
 }
+
+/**
+ * Backface culling is used to remove faces that are definitely
+ * not visible
+ */
 
 void backface_culling(mesh &mymesh, Vec3f cam, bool visible_faces[]){
     for(int i = 0; i < mymesh.num_faces; i++){
@@ -200,6 +251,13 @@ void backface_culling(mesh &mymesh, Vec3f cam, bool visible_faces[]){
     }
 }
 
+
+/**
+ * Normalizes the V values of the all the points
+ * A hashmap is used store max 'V' for each color
+ * The resolution used for 'H' is 3 digits after decimal
+ * and for 'S' is 5 digits after the decimal point
+ */
 void NormaliseV(){
     pair<int,int> key;
     map<pair<int,int>,double>::const_iterator it;
@@ -243,11 +301,11 @@ double illuminatePoint(Vec3f &pt, Vec3f &cam, Vec3f &light,int faceInd, mesh &pa
     double fatt = min(1.0,1/(c1 + c2 * dist + c3 *dist*dist));
     double diffusion = Kd * Ip * fatt * l.dot(n);
     
-    if(diffusion < 0)
+    if(diffusion < 0)                   // Zero out diffuse reflection if < 0
         diffusion = 0;
     //     cout << "BAMM!" << endl;
     double specular = Ks * Ip * fatt * pow(((2 * l.dot(n) * v.dot(n)) - l.dot(v)),specN);
-    if(specular < 0)
+    if(specular < 0)                    // Zero out specular reflection if < 0
     //     cout << "BAMM!!" << endl;
         specular = 0;
     double ans =  ambient + diffusion + specular;
@@ -279,7 +337,7 @@ double illuminatePoint(Vec3f &pt, Vec3f &cam, Vec3f &light,int faceInd, int mesh
 
     int f = 1;
     for(int i = 0; i < meshes.size(); i++){
-        if(i != meshIndex and ShadowCheckIntersection(light,pt,meshes[i])){
+        if(i != meshIndex and ShadowCheckIntersection(light,pt,meshes[i])){             // If there's shadow, zero the diffuse and specular components
             f = 0;
             break;
         }
@@ -316,7 +374,12 @@ bool ShadowCheckIntersection(Vec3f &light, Vec3f pt, int faceInd,mesh &parent_me
     return false;
 }
 
-
+/**
+ * Another overload
+ * Function called by illuminatePoint function
+ * Checks any of the faces except the face the point is on
+ * obstructs light
+ */
 bool ShadowCheckIntersection(Vec3f &light, Vec3f pt, mesh &parent_mesh){
     for(int i = 0; i < parent_mesh.num_faces; i++){
         if(ShadowCheckIntersection(light,pt,-1,parent_mesh))
@@ -394,7 +457,7 @@ double illuminatePoint(Vec3f &pt, Vec3f &cam, Vec3f &light,Wall &w, vector<mesh>
 }
 
 /**
- * Finds intersection point of a ray with a plane
+ * Finds intersection point of a ray with a plane(a wall here)
  */
 
 Vec3f IntersectionPoint(Vec3f pix, Vec3f cam, Wall &w){
@@ -409,7 +472,7 @@ Vec3f IntersectionPoint(Vec3f pix, Vec3f cam, Wall &w){
 }
 
 /**
- * Finds intersection point of a ray with a plane( a face in the mesh)
+ * Finds intersection point of a ray with a plane (a face in the mesh)
  */
 Vec3f IntersectionPoint(Vec3f pix, Vec3f cam, int k, mesh &parent_mesh){
     double t1 = (pix - cam).dot(parent_mesh.faces[k].n);
@@ -469,6 +532,14 @@ void raycast(mesh &mymesh,Vec3f cam, Vec3f light, string &filename){
     make_ppm(filename);
 }
 
+/**
+ * The main function that raycasts
+ * First, backface culling is done
+ * then a light ray is shooted from every pixel into the scene
+ * First intersection is checked with meshes
+ * if it doesn't intersect any, then with walls
+ */
+
 void raycast(vector<mesh> &meshes,Vec3f cam, Vec3f light, string &filename){
     int no_faces = 0, offset = 0;
     for(int i = 0; i < meshes.size();i++)
@@ -522,7 +593,9 @@ void raycast(vector<mesh> &meshes,Vec3f cam, Vec3f light, string &filename){
     make_ppm(filename);
 }
 
-
+/**
+ * Helper to write a PPM file 
+ */
 void make_ppm(string &filename){
     ofstream file;
 	file.open(filename.c_str());
@@ -544,38 +617,44 @@ void make_ppm(string &filename){
 }
 
 int main(){
-    string meshname("cube.obj");
+    string meshname;
     color col;
-    col.R = 128; col.G = 10;col.B = 128;
-    Vec3f cen(100, 100, -100);
-    Vec3f cam(250, 250, 250);
-    Vec3f light(100,100,-10);
-    mesh mymesh(meshname,col,cen,70);
-    vector<mesh> meshes;
-    meshes.push_back(mymesh);
-    meshname = "cube.obj";
+    int img_cnt;
+    Vec3f cam,light,cen;
+    cout<<"Enter the no of meshes in the scene : ";
+    cin>>img_cnt;
 
-    cen.x = 400; cen.y = 400;
-    col.R = 0; col.G = 10;col.B = 128;
-    mesh mymesh2(meshname,col,cen,70);
-    meshes.push_back(mymesh2);
+    cout<<"Enter camera x,y,z coordinates : ";
+    cin>>cam.x>>cam.y>>cam.z;
 
-    cen.x = 100; cen.y = 400;
-    col.R = 128; col.G = 10;col.B = 0;
-    mesh mymesh3(meshname,col,cen,70);
-    meshes.push_back(mymesh3);
-
-    cen.x = 400; cen.y = 100;
-    col.R = 128; col.G = 100;col.B = 255;
-    mesh mymesh4(meshname,col,cen,70);
-    meshes.push_back(mymesh4);
-
-    string output("out.ppm");
-    // raycast(mymesh2,cam,light,output);
-    raycast(meshes,cam,light,output);
-
+    cout<<"Enter light x,y,z coordinates : ";
+    cin>>light.x>>light.y>>light.z;
     
-    // raycast(mymesh,cam,light,output);
+    vector<mesh> meshes;
+    
+    int i=0,scale_factor;
+    while(i++<img_cnt)
+    {
+        cout<<"Enter the name of obj file for object "<<i<<" : ";
+        cin>>meshname;
+        cout<<"Enter x,y,z co-ordinates of object center : ";
+        cin>>cen.x>>cen.y>>cen.z;
+        cout<<"Enter the colour of the object(R G B) : ";
+        cin>>col.R>>col.G>>col.B;
+        cout<<"Scale Factor : ";
+        cin>>scale_factor;
+        mesh mymesh(meshname,col,cen,scale_factor);
+      	if(i==1)
+      	{
+        double a = -1*acos(0);
+        double b = 0.0, c = 0.0;
+        mymesh = mesh(mymesh,a,b,c);
+    	}
+        meshes.push_back(mymesh);
+    }
+    
+    // string output("out.ppm");
+    // raycast(meshes,cam,light,output);
 
     double x1,x2,x3;
     double thetaX = 0,thetaY = 0,thetaZ =0;
@@ -584,15 +663,18 @@ int main(){
     double theta = 0;
 
     vector<mesh> temp;
-
+    int k=0;
     for (int i = 0; i < 100; ++i)
 	{
         char name[20];
-		sprintf(name,"cube%03d.ppm",i+1);
+		sprintf(name,"out%03d.ppm",i+1);
 		string cppname(name);
 		cout << "Plotting " << cppname << endl;
+		
         for(int j = 0; j < meshes.size(); j++){
+        	
 		    temp.push_back(mesh(meshes[j],thetaX,thetaY,thetaZ));
+			
         }
 		raycast(temp,cam,light,cppname);
         temp.clear();
