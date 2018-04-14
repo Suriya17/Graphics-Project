@@ -538,6 +538,7 @@ void raycast(mesh &mymesh,Vec3f cam, Vec3f light, string &filename){
  * then a light ray is shooted from every pixel into the scene
  * First intersection is checked with meshes
  * if it doesn't intersect any, then with walls
+ * Takes a vector(array) of meshes and raycasts them
  */
 
 void raycast(vector<mesh> &meshes,Vec3f cam, Vec3f light, string &filename){
