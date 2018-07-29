@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>CS43004 : Ray casting on Triangle meshes</title>
+    <meta name="viewport" content="width=device-width">
+    <meta name="description" content="Course materials and notes for Stanford class CS231n: Convolutional Neural Networks for Visual Recognition.">
+    <link rel="canonical" href="http://cs231n.github.io/neural-networks-1/">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/main.css">
+
+    <!-- Google fonts -->
+    <link href='http://fonts.googleapis.com/css?family=Roboto:400,300' rel='stylesheet' type='text/css'>
+    
+</head>
+
+
+    <body>
+
+    <header class="site-header">
+
+  <div class="wrap title-wrap">
+    <a class="site-title" href="/">CS43004 : Ray casting on Triangle meshes</a>
+  </div>
+
+</header>
+
+
+    <div class="page-content">
+      <div class="wrap">
+      <div class="post">
+
+  <header class="post-header">
+    <h1></h1>
+  </header>
+
+  <article class="post-content">
+  <p>This is a report made by Surya Addanki and Satish Kumar Reddy Karri for our Computer Graphics term project.</p>
+  <p>Table of Contents:</p>
+
+<ul>
+  <li><a href="#objective">Objective</a></li>
+  <li><a href="#specs">Specifications</a></li>
+  <li><a href="#quick">Introduction</a></li>
+  <li><a href="#intro">Overview of ray casting</a>
+    <ul>
+      <li><a href="#bio">Procedure of ray casting</a></li>
+      <li><a href="#classifier">Illumination model</a></li>
+    </ul>
+  </li>
+  <li><a href="#results">Results</a></li>
+  <li><a href="#summary">Summary</a></li>
+</ul>
+
+<p><a name="objective"></a></p>
+
+<h2 id="Objective">Objective</h2>
+<p>Projection and animation of arbitrary number of objects given in obj format using a computer graphics technique called <strong>"Ray casting"</strong> to make them look realistic.</p>
+
+<p><a name="specs"></a></p>
+
+<h2 id="Specifications">Specifications</h2>
+<p><strong>Input</strong>: Set of objects(in obj format), respective centers, scaling factors, colors, position of light and camera</p>
+<p><strong>Output</strong>: The scene as seen from the camera in a \(500\times500\) PPM image </p>
+<h4>Other details</h4>
+<ul>
+  <li>The objects are assumed to be in a \(500\times500\times500\) room centered at \((250,250,-250)\). So, the centers of the objects and their scaling factors must be chosen accordingly so that the objects don't go outside the room.</li>
+  <li>The specifications like room size, output image dimensions can be changed by changing the macro WALL_SIDE in the <strong>tracer.h</strong> file.</li>
+  <li>To turn off the effect of shadow of one object on another, the variable <strong>CrossShadows</strong> can be set to false.</li>
+</ul>
+
+<p><a name="quick"></a></p>
+
+<h2 id="quick-intro">Introduction</h2>
+
+<p>In computer graphics, <b>ray tracing</b> is a rendering technique for generating an image by tracing the path of light as pixels in an image plane and simulating the effects of its encounters with virtual objects. The technique is capable of producing a very high degree of visual realism, usually higher than that of typical scanline rendering methods, but at a greater computational cost. This makes ray tracing best suited for applications where the image can be rendered slowly ahead of time, such as in still images and film and television visual effects, and more poorly suited for real-time applications like video games where speed is critical.</p>
+
+<p>The first ray tracing algorithm used for rendering was <b>"ray casting"</b>. The idea behind ray casting is to shoot rays from the eye—one per pixel—and find the closest object blocking the path of that ray. Using the material properties and the effect of the lights in the scene, this algorithm can determine the shading of this object. The simplifying assumption is made that if a surface faces a light, the light will reach that surface and not be blocked or in shadow.We used ray casting to project arbitrary objects given as triangular meshes in obj format. </p>
+<p><a name="intro"></a></p>
+
+<h2 id="modeling-one-neuron">Overview of ray casting</h2>
+
+<p>The ray casting algorithm takes an image made of pixels. We shoot a primary ray from the eye through every pixel of the image into the scene. The direction of that primary ray is obtained by tracing a line from the eye to each pixel in the image. Now we check if this ray intersects any of the objects in the scene. If the ray intersects more than one object, we pick the object with minimum z value and use the properties of the intersection point to assign the pixel colour.</p>
+
+<p><a name="bio"></a></p>
+
+<h3 id="biological-motivation-and-connections">Procedure of ray casting</h3>
+
+<p>In our case, every object is given as set of trianglular meshes. Hence, to check the intersection of primary ray with the object, we need to check the intersection with all the trianguled faces of the object. We initially find the intersection of the ray with the plane containing the triangle, then we check if the point of intersection lies within the face using barycentric coordinates technique.</p>
+
+<div class="fig figcenter fighighlight">
+  <img src="assets/images/img1.gif" width="49%" />
+  <img src="assets/images/img3.gif" width="49%" style="border-left: 1px solid black;" />
+  <div class="figcaption">Left : Shooting a primary ray through the center of the pixel to check for a possible object intersection. When we find one we then cast a shadow ray to find out if the point is illuminated or in shadow (Left) and the small sphere cast a shadow on the large sphere. The shadow ray intersects the small sphere before it gets to the light (Right)</div>
+</div>
+
+<p>If the point indeed lies on the object, then we shoot another ray from the point to the light source. If this ray intersects any of other objects in the scene, it means that light is obstructed from reaching that point. So, it becomes a shadow(only ambient light is present). Otherwise, we use the illumination model to find the intensity of light at that point.</p>
+<!-- <p> For determining if a point is shadow we check for  intersection of the  shadow ray (as shown in fig) with all other objects.If it intersects any of them, then it is considered to be a shadow and its intensity is calculated as described below.</p> -->
+
+<!-- <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Neuron</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="c"># ... </span>
+  <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">):</span>
+    <span class="s">""" assume inputs and weights are 1-D numpy arrays and bias is a number """</span>
+    <span class="n">cell_body_sum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="nb">sum</span><span class="p">(</span><span class="n">inputs</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">bias</span>
+    <span class="n">firing_rate</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">cell_body_sum</span><span class="p">))</span> <span class="c"># sigmoid activation function</span>
+    <span class="k">return</span> <span class="n">firing_rate</span>
+</code></pre></div></div> -->
+
+<!-- <p>In other words, each neuron performs a dot product with the input and its weights, adds the bias and applies the non-linearity (or activation function), in this case the sigmoid \(\sigma(x) = 1/(1+e^{-x})\). We will go into more details about different activation functions at the end of this section.</p>
+
+<p><strong>Coarse model.</strong> It’s important to stress that this model of a biological neuron is very coarse: For example, there are many different types of neurons, each with different properties. The dendrites in biological neurons perform complex nonlinear computations. The synapses are not just a single weight, they’re a complex non-linear dynamical system. The exact timing of the output spikes in many systems is known to be important, suggesting that the rate code approximation may not hold. Due to all these and many other simplifications, be prepared to hear groaning sounds from anyone with some neuroscience background if you draw analogies between Neural Networks and real brains. See this <a href="https://physics.ucsd.edu/neurophysics/courses/physics_171/annurev.neuro.28.061604.135703.pdf">review</a> (pdf), or more recently this <a href="http://www.sciencedirect.com/science/article/pii/S0959438814000130">review</a> if you are interested.</p> -->
+
+<p><a name="classifier"></a></p>
+
+<h3 id="single-neuron-as-a-linear-classifier">Illumination model</h3>
+
+<p>Illumination model is how light reflects from surfaces and produces what we perceive as color. It is used to calculate the intensity of light that we should see at a given point on the surface of an object. The illumination model we used is <strong>Phong Illumination Model</strong>.</p>
+<p> The three important components of this model are : </p>
+<ul>
+  <li> Ambient Light </li>
+  <li> Diffuse Reflection</li>
+  <li> Specular Reflection</li>
+</ul>
+<h4 id="single-neuron-as-a-linear-classifier" ><strong>Ambient Light : </strong></h4>
+<p>A diffuse and omnipresent light, which is usually faint and impinges equally on all surfaces from all directions, is ambient light. The resulting intensity at each point of the object surface is given by \(I = K_aI_a\)  where \(I_a\) is the intensity of ambient light, assumed to be constant for all objects. \(K_a\) is ambient-reflection
+  coefficient, ranging in the interval \([0, 1]\), and it is a material property</p>
+<!-- <p><strong>Binary Softmax classifier</strong>. For example, we can interpret \(\sigma(\sum_iw_ix_i + b)\) to be the probability of one of the classes \(P(y_i = 1 \mid x_i; w) \). The probability of the other class would be \(P(y_i = 0 \mid x_i; w) = 1 - P(y_i = 1 \mid x_i; w) \), since they must sum to one. With this interpretation, we can formulate the cross-entropy loss as we have seen in the Linear Classification section, and optimizing it would lead to a binary Softmax classifier (also known as <em>logistic regression</em>). Since the sigmoid function is restricted to be between 0-1, the predictions of this classifier are based on whether the output of the neuron is greater than 0.5.</p> -->
+
+<h4 id="single-neuron-as-a-linear-classifier" ><strong>Diffuse Reflection : </strong></h4>
+<p>Dull, matte surfaces, such as chalk, exhibit diffuse reflection, which is also known as Lambertian reflection. Such surfaces appear equally bright from all viewing angles because they
+  reflect light with equal intensity in all directions. The resulting intensity due to diffuse Reflection is
+  given by \(I = K_dI_pcos\theta\) where \(I_p\) is the intensity of the point light source. \(K_d\) is the coefficient of diffuse reflection, which is
+  a constant for a specific material and ranges in the interval \([0, 1]\) and \(\theta\), angle of incidence is the angle measured between between the direction 
+  from p to the point light source and the normal to the surface</p>
+
+  <h4 id="single-neuron-as-a-linear-classifier" ><strong>Specular Reflection : </strong></h4>
+  <p>Specular reflection is observed on any shiny surface. For example, when an apple is illuminated with a white light, a bright spot is found in the illuminated region of its surface, which adds
+    a ‘shine’ to it. If one moves his ahead, the bright spot also moves a bit. This means the distribution of illumination is subject to the viewer’s position. This is called specular reflection. The resulting intensity due to diffuse Reflection is given by \(I = K_sI_pcos^n\alpha\) where \(K_s\) is the material’s specular-reflection coefficient, ranging in \([0, 1]\), and \(n\) is its specular-reflection exponent. A higher value of \(n\) creates a smaller and brighter spot. \(\alpha\) is the angle between direction from point to camera and the reflected ray.</p>
+
+  <p>To account the fact that the energy from a point light source falls off as the inverse square of d, the distance traveled by the light wave, we have multiplied <strong>diffuse</strong> and <strong>specular</strong> components with an attentuation factor, \(f_{att}\) which is calculated as  \( f_{att} = min(\frac{1}{c_1+c_2d+c_3d^2},1)\).</p>
+
+  <p>So, the final expression of intensity of light at a point p is given by :</p>
+  <p>\(I = K_aI_a + f_{att}\ ( K_dI_pcos\theta\ + K_sI_pcos^n\alpha\))</p>
+  <div class="fig figcenter fighighlight">
+    <img src="assets/images/diffuse.png" width="49%" />
+    <img src="assets/images/specular.png" width="49%" style="border-left: 1px solid black;" />
+    <div class="figcaption">Figure 2 : Figures showing different vectors used in the calculation of diffuse,specular components.Here \(L\) is the direction to light source and \(N\) is the normal to the surface and \(R\) is reflected ray and \(V\) is the direction along camera and shooted pixel </div>
+  </div>
+
+  <h4 id="single-neuron-as-a-linear-classifier" ><strong>Method followed to get final RGB value of a pixel : </strong></h4>
+  <p><strong>RGB</strong> model is not intuitive enough for us to understand intensity of light. So, we use <strong>HSV</strong> color model for intensity calculations.</p>
+  <ol>
+    <li>Find HSV values from the material RGB values.Now we made H,S fixed and change V according to the Intensity of the point calculated as above.</li>
+    <li>If the point is  <strong>shadow </strong>,we made diffuse,specular components zero. We initially set V to sum of all the above mentioned intensity components. </li>
+    <li>In order to make V in the range \([0,1]\) we normalized the V values.</li>
+    <li><strong>Normalization technique used :</strong> we found the max V value per colour and divided all the V values of this particular colour with this max V value.</li>
+    <li>Now we recalculated the RGB values from the current HSV values and used these RGB values for the pixel.</li>
+  </ol>
+
+  <p><a name="results"></a></p>
+
+  <h3 id="Results">Results</h3>
+  <div class="fig figcenter fighighlight">
+    <!-- <img src="assets/images/teapot.gif" width="49%" /> -->
+    <img src="assets/images/table.gif" width="65%" style="border-left: 1px solid black;" />
+    <div class="gifcaption">Generated with two objects in the scene, <a href="assets/objs/table.obj">table</a> and a <a href="assets/objs/vase.obj">vase</a> </div>
+  </div>
+  <div class="fig figcenter fighighlight2">
+    <!-- <img src="assets/images/teapot.gif" width="49%" /> -->
+    <img src="assets/images/teapot.gif" width="65%" style="border-left: 1px solid black;" />
+    <div class="gifcaption">Generated with two objects in the scene, <a href="assets/objs/teapot.obj">teapot</a> and a <a href="assets/objs/mug.obj">mug</a> </div>
+  </div>
+  <div class="fig figcenter fighighlight2">
+      <!-- <img src="assets/images/teapot.gif" width="49%" /> -->
+      <img src="assets/images/spheres.gif" width="65%" style="border-left: 1px solid black;" />
+      <div class="gifcaption">Generated with three <a href="assets/objs/sphere.obj">spheres</a> in the scene</div>
+  </div>
+  <div class="fig figcenter fighighlight2">
+    <img src="assets/images/bunny.gif" width="49%" />
+    <img src="assets/images/plane.gif" width="49%" style="border-left: 1px solid black;" />
+    <div class="gifcaption">Each generated with one object in the scene, Left: <a href="assets/objs/bun_small.obj">bunny</a> and Right: <a href="assets/objs/f16.obj">plane</a> </div>
+  </div>
+  <div class="fig figcenter fighighlight2">
+    <img src="assets/images/cubes.gif" width="49%" />
+    <img src="assets/images/apple.gif" width="49%" style="border-left: 1px solid black;" />
+    <div class="gifcaption">Left: Three <a href="assets/objs/cube.obj">cubes</a> in the scene, Right: <a href="assets/objs/apple.obj">apple</a></div>
+  </div>
+  <a href="more_gifs.html"> More gifs</a>
+
+
+<!-- <p><strong>Regularization interpretation</strong>. The regularization loss in both SVM/Softmax cases could in this biological view be interpreted as <em>gradual forgetting</em>, since it would have the effect of driving all synaptic weights \(w\) towards zero after every parameter update.</p> -->
+
+<!-- <blockquote>
+  <p>A single neuron can be used to implement a binary classifier (e.g. binary Softmax or binary SVM classifiers)</p>
+</blockquote>
+
+<p><a name="actfun"></a></p>
+
+<h3 id="commonly-used-activation-functions">Commonly used activation functions</h3>
+
+<p>Every activation function (or <em>non-linearity</em>) takes a single number and performs a certain fixed mathematical operation on it. There are several activation functions you may encounter in practice:</p>
+
+<div class="fig figcenter fighighlight">
+  <img src="assets/nn1/sigmoid.jpeg" width="40%" />
+  <img src="assets/nn1/tanh.jpeg" width="40%" style="border-left: 1px solid black;" />
+  <div class="figcaption"><b>Left:</b> Sigmoid non-linearity squashes real numbers to range between [0,1] <b>Right:</b> The tanh non-linearity squashes real numbers to range between [-1,1].</div>
+</div>
+
+<p><strong>Sigmoid.</strong> The sigmoid non-linearity has the mathematical form \(\sigma(x) = 1 / (1 + e^{-x})\) and is shown in the image above on the left. As alluded to in the previous section, it takes a real-valued number and “squashes” it into range between 0 and 1. In particular, large negative numbers become 0 and large positive numbers become 1. The sigmoid function has seen frequent use historically since it has a nice interpretation as the firing rate of a neuron: from not firing at all (0) to fully-saturated firing at an assumed maximum frequency (1). In practice, the sigmoid non-linearity has recently fallen out of favor and it is rarely ever used. It has two major drawbacks:</p>
+
+<ul>
+  <li><em>Sigmoids saturate and kill gradients</em>. A very undesirable property of the sigmoid neuron is that when the neuron’s activation saturates at either tail of 0 or 1, the gradient at these regions is almost zero. Recall that during backpropagation, this (local) gradient will be multiplied to the gradient of this gate’s output for the whole objective. Therefore, if the local gradient is very small, it will effectively “kill” the gradient and almost no signal will flow through the neuron to its weights and recursively to its data. Additionally, one must pay extra caution when initializing the weights of sigmoid neurons to prevent saturation. For example, if the initial weights are too large then most neurons would become saturated and the network will barely learn.</li>
+  <li><em>Sigmoid outputs are not zero-centered</em>. This is undesirable since neurons in later layers of processing in a Neural Network (more on this soon) would be receiving data that is not zero-centered. This has implications on the dynamics during gradient descent, because if the data coming into a neuron is always positive (e.g. \(x &gt; 0\) elementwise in \(f = w^Tx + b\))), then the gradient on the weights \(w\) will during backpropagation become either all be positive, or all negative (depending on the gradient of the whole expression \(f\)). This could introduce undesirable zig-zagging dynamics in the gradient updates for the weights. However, notice that once these gradients are added up across a batch of data the final update for the weights can have variable signs, somewhat mitigating this issue. Therefore, this is an inconvenience but it has less severe consequences compared to the saturated activation problem above.</li>
+</ul>
+
+<p><strong>Tanh.</strong> The tanh non-linearity is shown on the image above on the right. It squashes a real-valued number to the range [-1, 1]. Like the sigmoid neuron, its activations saturate, but unlike the sigmoid neuron its output is zero-centered. Therefore, in practice the <em>tanh non-linearity is always preferred to the sigmoid nonlinearity.</em> Also note that the tanh neuron is simply a scaled sigmoid neuron, in particular the following holds: \( \tanh(x) = 2 \sigma(2x) -1  \).</p>
+
+<div class="fig figcenter fighighlight">
+  <img src="assets/nn1/relu.jpeg" width="40%" />
+  <img src="assets/nn1/alexplot.jpeg" width="40%" style="border-left: 1px solid black;" />
+  <div class="figcaption"><b>Left:</b> Rectified Linear Unit (ReLU) activation function, which is zero when x &lt; 0 and then linear with slope 1 when x &gt; 0. <b>Right:</b> A plot from <a href="http://www.cs.toronto.edu/~fritz/absps/imagenet.pdf">Krizhevsky et al.</a> (pdf) paper indicating the 6x improvement in convergence with the ReLU unit compared to the tanh unit.</div>
+</div>
+
+<p><strong>ReLU.</strong> The Rectified Linear Unit has become very popular in the last few years. It computes the function \(f(x) = \max(0, x)\). In other words, the activation is simply thresholded at zero (see image above on the left). There are several pros and cons to using the ReLUs:</p>
+
+<ul>
+  <li>(+) It was found to greatly accelerate (e.g. a factor of 6 in <a href="http://www.cs.toronto.edu/~fritz/absps/imagenet.pdf">Krizhevsky et al.</a>) the convergence of stochastic gradient descent compared to the sigmoid/tanh functions. It is argued that this is due to its linear, non-saturating form.</li>
+  <li>(+) Compared to tanh/sigmoid neurons that involve expensive operations (exponentials, etc.), the ReLU can be implemented by simply thresholding a matrix of activations at zero.</li>
+  <li>(-) Unfortunately, ReLU units can be fragile during training and can “die”. For example, a large gradient flowing through a ReLU neuron could cause the weights to update in such a way that the neuron will never activate on any datapoint again. If this happens, then the gradient flowing through the unit will forever be zero from that point on. That is, the ReLU units can irreversibly die during training since they can get knocked off the data manifold. For example, you may find that as much as 40% of your network can be “dead” (i.e. neurons that never activate across the entire training dataset) if the learning rate is set too high. With a proper setting of the learning rate this is less frequently an issue.</li>
+</ul>
+
+<p><strong>Leaky ReLU.</strong> Leaky ReLUs are one attempt to fix the “dying ReLU” problem. Instead of the function being zero when x &lt; 0, a leaky ReLU will instead have a small negative slope (of 0.01, or so). That is, the function computes \(f(x) = \mathbb{1}(x &lt; 0) (\alpha x) + \mathbb{1}(x&gt;=0) (x) \) where \(\alpha\) is a small constant. Some people report success with this form of activation function, but the results are not always consistent. The slope in the negative region can also be made into a parameter of each neuron, as seen in PReLU neurons, introduced in <a href="http://arxiv.org/abs/1502.01852">Delving Deep into Rectifiers</a>, by Kaiming He et al., 2015. However, the consistency of the benefit across tasks is presently unclear.</p>
+
+<p><strong>Maxout</strong>. Other types of units have been proposed that do not have the functional form \(f(w^Tx + b)\) where a non-linearity is applied on the dot product between the weights and the data. One relatively popular choice is the Maxout neuron (introduced recently by <a href="http://www-etud.iro.umontreal.ca/~goodfeli/maxout.html">Goodfellow et al.</a>) that generalizes the ReLU and its leaky version. The Maxout neuron computes the function \(\max(w_1^Tx+b_1, w_2^Tx + b_2)\). Notice that both ReLU and Leaky ReLU are a special case of this form (for example, for ReLU we have \(w_1, b_1 = 0\)). The Maxout neuron therefore enjoys all the benefits of a ReLU unit (linear regime of operation, no saturation) and does not have its drawbacks (dying ReLU). However, unlike the ReLU neurons it doubles the number of parameters for every single neuron, leading to a high total number of parameters.</p>
+
+<p>This concludes our discussion of the most common types of neurons and their activation functions. As a last comment, it is very rare to mix and match different types of neurons in the same network, even though there is no fundamental problem with doing so.</p>
+To account the fact that the energy from a point light source falls off as the inverse square of d, the distance traveled by the light wave,we have multiplied diffuse,specular components by fatt which is calculated as 
+<p><strong>TLDR</strong>: “<em>What neuron type should I use?</em>” Use the ReLU non-linearity, be careful with your learning rates and possibly monitor the fraction of “dead” units in a network. If this concerns you, give Leaky ReLU or Maxout a try. Never use sigmoid. Try tanh, but expect it to work worse than ReLU/Maxout.</p>
+
+<p><a name="nn"></a></p>
+
+<h2 id="neural-network-architectures">Neural Network architectures</h2>
+
+<p><a name="layers"></a></p>
+
+<h3 id="layer-wise-organization">Layer-wise organization</h3>
+
+<p><strong>Neural Networks as neurons in graphs</strong>. Neural Networks are modeled as collections of neurons that are connected in an acyclic graph. In other words, the outputs of some neurons can become inputs to other neurons. Cycles are not allowed since that would imply an infinite loop in the forward pass of a network. Instead of an amorphous blobs of connected neurons, Neural Network models are often organized into distinct layers of neurons. For regular neural networks, the most common layer type is the <strong>fully-connected layer</strong> in which  neurons between two adjacent layers are fully pairwise connected, but neurons within a single layer share no connections. Below are two example Neural Network topologies that use a stack of fully-connected layers:</p>
+
+<div class="fig figcenter fighighlight">
+  <img src="assets/nn1/neural_net.jpeg" width="40%" />
+  <img src="assets/nn1/neural_net2.jpeg" width="55%" style="border-left: 1px solid black;" />
+  <div class="figcaption"><b>Left:</b> A 2-layer Neural Network (one hidden layer of 4 neurons (or units) and one output layer with 2 neurons), and three inputs. <b>Right:</b> A 3-layer neural network with three inputs, two hidden layers of 4 neurons each and one output layer. Notice that in both cases there are connections (synapses) between neurons across layers, but not within a layer.</div>
+</div>
+
+<p><strong>Naming conventions.</strong> Notice that when we say N-layer neural network, we do not count the input layer. Therefore, a single-layer neural network describes a network with no hidden layers (input directly mapped to output). In that sense, you can sometimes hear people say that logistic regression or SVMs are simply a special case of single-layer Neural Networks. You may also hear these networks interchangeably referred to as <em>“Artificial Neural Networks”</em> (ANN) or <em>“Multi-Layer Perceptrons”</em> (MLP). Many people do not like the analogies between Neural Networks and real brains and prefer to refer to neurons as <em>units</em>.</p>
+
+<p><strong>Output layer.</strong> Unlike all layers in a Neural Network, the output layer neurons most commonly do not have an activation function (or you can think of them as having a linear identity activation function). This is because the last output layer is usually taken to represent the class scores (e.g. in classification), which are arbitrary real-valued numbers, or some kind of real-valued target (e.g. in regression).</p>
+
+<p><strong>Sizing neural networks</strong>. The two metrics that people commonly use to measure the size of neural networks are the number of neurons, or more commonly the number of parameters. Working with the two example networks in the above picture:</p>
+
+<ul>
+  <li>The first network (left) has 4 + 2 = 6 neurons (not counting the inputs), [3 x 4] + [4 x 2] = 20 weights and 4 + 2 = 6 biases, for a total of 26 learnable parameters.</li>
+  <li>The second network (right) has 4 + 4 + 1 = 9 neurons, [3 x 4] + [4 x 4] + [4 x 1] = 12 + 16 + 4 = 32 weights and 4 + 4 + 1 = 9 biases, for a total of 41 learnable parameters.</li>
+</ul>
+
+<p>To give you some context, modern Convolutional Networks contain on orders of 100 million parameters and are usually made up of approximately 10-20 layers (hence <em>deep learning</em>). However, as we will see the number of <em>effective</em> connections is significantly greater due to parameter sharing. More on this in the Convolutional Neural Networks module.</p>
+
+<p><a name="feedforward"></a></p>
+
+<h3 id="example-feed-forward-computation">Example feed-forward computation</h3>
+
+<p><em>Repeated matrix multiplications interwoven with activation function</em>. One of the primary reasons that Neural Networks are organized into layers is that this structure makes it very simple and efficient to evaluate Neural Networks using matrix vector operations. Working with the example three-layer neural network in the diagram above, the input would be a [3x1] vector. All connection strengths for a layer can be stored in a single matrix. For example, the first hidden layer’s weights <code class="highlighter-rouge">W1</code> would be of size [4x3], and the biases for all units would be in the vector <code class="highlighter-rouge">b1</code>, of size [4x1]. Here, every single neuron has its weights in a row of <code class="highlighter-rouge">W1</code>, so the matrix vector multiplication <code class="highlighter-rouge">np.dot(W1,x)</code> evaluates the activations of all neurons in that layer. Similarly, <code class="highlighter-rouge">W2</code> would be a [4x4] matrix that stores the connections of the second hidden layer, and <code class="highlighter-rouge">W3</code> a [1x4] matrix for the last (output) layer. The full forward pass of this 3-layer neural network is then simply three matrix multiplications, interwoven with the application of the activation function:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># forward-pass of a 3-layer neural network:</span>
+<span class="n">f</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="mf">1.0</span><span class="o">/</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="p">))</span> <span class="c"># activation function (use sigmoid)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="c"># random input vector of three numbers (3x1)</span>
+<span class="n">h1</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">W1</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="n">b1</span><span class="p">)</span> <span class="c"># calculate first hidden layer activations (4x1)</span>
+<span class="n">h2</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">W2</span><span class="p">,</span> <span class="n">h1</span><span class="p">)</span> <span class="o">+</span> <span class="n">b2</span><span class="p">)</span> <span class="c"># calculate second hidden layer activations (4x1)</span>
+<span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">W3</span><span class="p">,</span> <span class="n">h2</span><span class="p">)</span> <span class="o">+</span> <span class="n">b3</span> <span class="c"># output neuron (1x1)</span>
+</code></pre></div></div>
+
+<p>In the above code, <code class="highlighter-rouge">W1,W2,W3,b1,b2,b3</code> are the learnable parameters of the network. Notice also that instead of having a single input column vector, the variable <code class="highlighter-rouge">x</code> could hold an entire batch of training data (where each input example would be a column of <code class="highlighter-rouge">x</code>) and then all examples would be efficiently evaluated in parallel. Notice that the final Neural Network layer usually doesn’t have an activation function (e.g. it represents a (real-valued) class score in a classification setting).</p>
+
+<blockquote>
+  <p>The forward pass of a fully-connected layer corresponds to one matrix multiplication followed by a bias offset and an activation function.</p>
+</blockquote>
+
+<p><a name="power"></a></p>
+
+<h3 id="representational-power">Representational power</h3>
+
+<p>One way to look at Neural Networks with fully-connected layers is that they define a family of functions that are parameterized by the weights of the network. A natural question that arises is: What is the representational power of this family of functions? In particular, are there functions that cannot be modeled with a Neural Network?</p>
+
+<p>It turns out that Neural Networks with at least one hidden layer are <em>universal approximators</em>. That is, it can be shown (e.g. see <a href="http://www.dartmouth.edu/~gvc/Cybenko_MCSS.pdf"><em>Approximation by Superpositions of Sigmoidal Function</em></a> from 1989 (pdf), or this <a href="http://neuralnetworksanddeeplearning.com/chap4.html">intuitive explanation</a> from Michael Nielsen) that given any continuous function \(f(x)\) and some \(\epsilon &gt; 0\), there exists a Neural Network \(g(x)\) with one hidden layer (with a reasonable choice of non-linearity, e.g. sigmoid) such that \( \forall x, \mid f(x) - g(x) \mid &lt; \epsilon \). In other words, the neural network can approximate any continuous function.</p>
+
+<p>If one hidden layer suffices to approximate any function, why use more layers and go deeper? The answer is that the fact that a two-layer Neural Network is a universal approximator is, while mathematically cute, a relatively weak and useless statement in practice. In one dimension, the “sum of indicator bumps” function \(g(x) = \sum_i c_i \mathbb{1}(a_i &lt; x &lt; b_i)\) where \(a,b,c\) are parameter vectors is also a universal approximator, but noone would suggest that we use this functional form in Machine Learning. Neural Networks work well in practice because they compactly express nice, smooth functions that fit well with the statistical properties of data we encounter in practice, and are also easy to learn using our optimization algorithms (e.g. gradient descent). Similarly, the fact that deeper networks (with multiple hidden layers) can work better than a single-hidden-layer networks is an empirical observation, despite the fact that their representational power is equal.</p>
+
+<p>As an aside, in practice it is often the case that 3-layer neural networks will outperform 2-layer nets, but going even deeper (4,5,6-layer) rarely helps much more. This is in stark contrast to Convolutional Networks, where depth has been found to be an extremely important component for a good recognition system (e.g. on order of 10 learnable layers). One argument for this observation is that images contain hierarchical structure (e.g. faces are made up of eyes, which are made up of edges, etc.), so several layers of processing make intuitive sense for this data domain.</p>
+
+<p>The full story is, of course, much more involved and a topic of much recent research. If you are interested in these topics we recommend for further reading:</p>
+
+<ul>
+  <li><a href="http://www.deeplearningbook.org/">Deep Learning</a> book in press by Bengio, Goodfellow, Courville, in particular <a href="http://www.deeplearningbook.org/contents/mlp.html">Chapter 6.4</a>.</li>
+  <li><a href="http://arxiv.org/abs/1312.6184">Do Deep Nets Really Need to be Deep?</a></li>
+  <li><a href="http://arxiv.org/abs/1412.6550">FitNets: Hints for Thin Deep Nets</a></li>
+</ul>
+
+<p><a name="arch"></a></p>
+
+<h3 id="setting-number-of-layers-and-their-sizes">Setting number of layers and their sizes</h3>
+
+<p>How do we decide on what architecture to use when faced with a practical problem? Should we use no hidden layers? One hidden layer? Two hidden layers? How large should each layer be? First, note that as we increase the size and number of layers in a Neural Network, the <strong>capacity</strong> of the network increases. That is, the space of representable functions grows since the neurons can collaborate to express many different functions. For example, suppose we had a binary classification problem in two dimensions. We could train three separate neural networks, each with one hidden layer of some size and obtain the following classifiers:</p>
+
+<div class="fig figcenter fighighlight">
+  <img src="assets/nn1/layer_sizes.jpeg" />
+  <div class="figcaption">Larger Neural Networks can represent more complicated functions. The data are shown as circles colored by their class, and the decision regions by a trained neural network are shown underneath. You can play with these examples in this <a href="http://cs.stanford.edu/people/karpathy/convnetjs/demo/classify2d.html">ConvNetsJS demo</a>.</div>
+</div>
+
+<p>In the diagram above, we can see that Neural Networks with more neurons can express more complicated functions. However, this is both a blessing (since we can learn to classify more complicated data) and a curse (since it is easier to overfit the training data). <strong>Overfitting</strong> occurs when a model with high capacity fits the noise in the data instead of the (assumed) underlying relationship. For example, the model with 20 hidden neurons fits all the training data but at the cost of segmenting the space into many disjoint red and green decision regions. The model with 3 hidden neurons only has the representational power to classify the data in broad strokes. It models the data as two blobs and interprets the few red points inside the green cluster as <strong>outliers</strong> (noise). In practice, this could lead to better <strong>generalization</strong> on the test set.</p>
+
+<p>Based on our discussion above, it seems that smaller neural networks can be preferred if the data is not complex enough to prevent overfitting. However, this is incorrect - there are many other preferred ways to prevent overfitting in Neural Networks that we will discuss later (such as L2 regularization, dropout, input noise). In practice, it is always better to use these methods to control overfitting instead of the number of neurons.</p>
+
+<p>The subtle reason behind this is that smaller networks are harder to train with local methods such as Gradient Descent: It’s clear that their loss functions have relatively few local minima, but it turns out that many of these minima are easier to converge to, and that they are bad (i.e. with high loss). Conversely, bigger neural networks contain significantly more local minima, but these minima turn out to be much better in terms of their actual loss. Since Neural Networks are non-convex, it is hard to study these properties mathematically, but some attempts to understand these objective functions have been made, e.g. in a recent paper <a href="http://arxiv.org/abs/1412.0233">The Loss Surfaces of Multilayer Networks</a>. In practice, what you find is that if you train a small network the final loss can display a good amount of variance - in some cases you get lucky and converge to a good place but in some cases you get trapped in one of the bad minima. On the other hand, if you train a large network you’ll start to find many different solutions, but the variance in the final achieved loss will be much smaller. In other words, all solutions are about equally as good, and rely less on the luck of random initialization.</p>
+
+<p>To reiterate, the regularization strength is the preferred way to control the overfitting of a neural network. We can look at the results achieved by three different settings:</p>
+
+<div class="fig figcenter fighighlight">
+  <img src="assets/nn1/reg_strengths.jpeg" />
+  <div class="figcaption">
+    The effects of regularization strength: Each neural network above has 20 hidden neurons, but changing the regularization strength makes its final decision regions smoother with a higher regularization. You can play with these examples in this <a href="http://cs.stanford.edu/people/karpathy/convnetjs/demo/classify2d.html">ConvNetsJS demo</a>.
+  </div>
+</div>
+
+<p>The takeaway is that you should not be using smaller networks because you are afraid of overfitting. Instead, you should use as big of a neural network as your computational budget allows, and use other regularization techniques to control overfitting.</p> -->
+
+<p><a name="summary"></a></p>
+
+<h2 id="summary">Summary</h2>
+
+<p>In summary,</p>
+
+<ul>
+  <li>We used ray casting to create realistic images.</li>
+  <li>We can make it more realistic using further techniques like applying textures and using recursive ray tracing.</li>
+  <li>All ray tracing techniques require very high compute power. But, these algorithms are highly parralelizable. Using GPUs, we can drastically reduce running time.</li>
+</ul>
+
+<p><a name="add"></a></p>
+
+<h2 id="additional-references">References and image sources</h2>
+
+<ul>
+  <li><a href="http://cse.iitkgp.ac.in/~pb/pb-graphics-2018.pdf">Computer Graphics : Selected Lecture Notes</a> by Partha Bhowmick</li>
+  <li><a href="https://www.scratchapixel.com/lessons/3d-basic-rendering/introduction-to-ray-tracing/implementing-the-raytracing-algorithm">An overview about ray tracing </a> </li>
+</ul>
+
+  </article>
+
+</div>
+      </div>
+    </div>
+
+
+
+
+    <!-- mathjax -->
+    <script type="text/javascript" async
+      src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML">
+    </script>
+
+    </body>
+</html>
