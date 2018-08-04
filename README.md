@@ -19,5 +19,5 @@
    
 ## Results
 
-![Table.gif](https://github.com/ksskreddy/Graphics-Project/blob/master/assets/images/table.gif)
+      ![Table.gif](https://github.com/ksskreddy/Graphics-Project/blob/master/assets/images/table.gif)
 
