@@ -17,4 +17,7 @@
    * The specifications like room size, output image dimensions can be changed by changing the macro WALL_SIDE in the tracer.h file.
    * To turn off the effect of shadow of one object on another, the variable CrossShadows can be set to false.
    
-  
+## Results
+
+![Table.gif](https://github.com/ksskreddy/Graphics-Project/blob/master/assets/images/table.gif)
+
