@@ -12,7 +12,7 @@
 
  ### Other details
 
-    The objects are assumed to be in a 500×500×500 room centered at (250,250,−250)
-    So, the centers of the objects and their scaling factors must be chosen accordingly so that the objects don't go outside the room.
-    The specifications like room size, output image dimensions can be changed by changing the macro WALL_SIDE in the tracer.h file.
-    To turn off the effect of shadow of one object on another, the variable CrossShadows can be set to false.
+   * The objects are assumed to be in a 500×500×500 room centered at (250,250,−250)
+   * So, the centers of the objects and their scaling factors must be chosen accordingly so that the objects don't go outside the room.
+   * The specifications like room size, output image dimensions can be changed by changing the macro WALL_SIDE in the tracer.h file.
+   * To turn off the effect of shadow of one object on another, the variable CrossShadows can be set to false.
