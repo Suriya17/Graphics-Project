@@ -22,22 +22,21 @@
 ### Scene with vase on table
 
   <p align="center"> <img align = "center" src= "https://github.com/ksskreddy/Graphics-Project/blob/master/assets/images/table.gif" title = "Scene with vase on table"></p>
-  
-  ![Table.gif](https://github.com/ksskreddy/Graphics-Project/blob/master/assets/images/table.gif)
 
 ### Scene with teapot and mug
 
-   ![Teapot.gif](https://github.com/ksskreddy/Graphics-Project/blob/master/assets/images/teapot.gif)
+  <p align="center"> <img align = "center" src= "https://github.com/ksskreddy/Graphics-Project/blob/master/assets/images/teapot.gif" title = "Scene with teapot and mug"></p>
 
 ### Scene with Spheres
 
-   ![Spheres.gif](https://github.com/ksskreddy/Graphics-Project/blob/master/assets/images/spheres.gif)
+  <p align="center"> <img align = "center" src= "https://github.com/ksskreddy/Graphics-Project/blob/master/assets/images/spheres.gif" title = "Scene with Spheres"></p>
 
 ### Scene with bunny
 
-   ![bunny.gif](https://github.com/ksskreddy/Graphics-Project/blob/master/assets/images/bunny.gif)
+  <p align="center"> <img align = "center" src= "https://github.com/ksskreddy/Graphics-Project/blob/master/assets/images/bunny.gif" title = "Scene with bunny"></p>
  
 ### Scene with plane
- 
-   ![plane.gif](https://github.com/ksskreddy/Graphics-Project/blob/master/assets/images/plane.gif)
+
+  <p align="center"> <img align = "center" src= "https://github.com/ksskreddy/Graphics-Project/blob/master/assets/images/plane.gif" title = "Scene with plane"></p>
+
 
