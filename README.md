@@ -19,13 +19,23 @@
    
 ## Results
 
-   ![Table.gif](https://github.com/ksskreddy/Graphics-Project/blob/master/assets/images/table.gif)
-   
+### Scene with vase on table
+
+   <div align="center">![Table.gif](https://github.com/ksskreddy/Graphics-Project/blob/master/assets/images/table.gif)</div>
+
+### Scene with teapot and mug
+
    ![Teapot.gif](https://github.com/ksskreddy/Graphics-Project/blob/master/assets/images/teapot.gif)
-   
+
+### Scene with Spheres
+
    ![Spheres.gif](https://github.com/ksskreddy/Graphics-Project/blob/master/assets/images/spheres.gif)
-   
+
+### Scene with bunny
+
    ![bunny.gif](https://github.com/ksskreddy/Graphics-Project/blob/master/assets/images/bunny.gif)
-   
+ 
+### Scene with plane
+ 
    ![plane.gif](https://github.com/ksskreddy/Graphics-Project/blob/master/assets/images/plane.gif)
 
