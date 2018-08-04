@@ -21,7 +21,7 @@
 
 ### Scene with vase on table
 
-   <div align="center">![Table.gif](https://github.com/ksskreddy/Graphics-Project/blob/master/assets/images/table.gif)</div>
+   ![Table.gif](https://github.com/ksskreddy/Graphics-Project/blob/master/assets/images/table.gif)
 
 ### Scene with teapot and mug
 
