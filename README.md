@@ -19,5 +19,13 @@
    
 ## Results
 
-      ![Table.gif](https://github.com/ksskreddy/Graphics-Project/blob/master/assets/images/table.gif)
+   ![Table.gif](https://github.com/ksskreddy/Graphics-Project/blob/master/assets/images/table.gif)
+   
+   ![Teapot.gif](https://github.com/ksskreddy/Graphics-Project/blob/master/assets/images/teapot.gif)
+   
+   ![Spheres.gif](https://github.com/ksskreddy/Graphics-Project/blob/master/assets/images/spheres.gif)
+   
+   ![bunny.gif](https://github.com/ksskreddy/Graphics-Project/blob/master/assets/images/bunny.gif)
+   
+   ![plane.gif](https://github.com/ksskreddy/Graphics-Project/blob/master/assets/images/plane.gif)
 
