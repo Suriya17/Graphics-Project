@@ -21,7 +21,7 @@
 
 ### Scene with vase on table
 
-  <img align = "center" src= "https://github.com/ksskreddy/Graphics-Project/blob/master/assets/images/table.gif" title = "Scene with vase on table">
+  <p align="center"> <img align = "center" src= "https://github.com/ksskreddy/Graphics-Project/blob/master/assets/images/table.gif" title = "Scene with vase on table"></p>
   
   ![Table.gif](https://github.com/ksskreddy/Graphics-Project/blob/master/assets/images/table.gif)
 
