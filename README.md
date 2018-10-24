@@ -19,11 +19,11 @@
    
 ## Results
 
-### Scene with vase on table
+### Scene with Vase on Table
 
   <p align="center"> <img align = "center" src= "https://github.com/ksskreddy/Graphics-Project/blob/master/assets/images/table.gif" title = "Scene with vase on table"></p>
 
-### Scene with teapot and mug
+### Scene with Teapot and Mug
 
   <p align="center"> <img align = "center" src= "https://github.com/ksskreddy/Graphics-Project/blob/master/assets/images/teapot.gif" title = "Scene with teapot and mug"></p>
 
@@ -31,11 +31,11 @@
 
   <p align="center"> <img align = "center" src= "https://github.com/ksskreddy/Graphics-Project/blob/master/assets/images/spheres.gif" title = "Scene with Spheres"></p>
 
-### Scene with bunny
+### Scene with Bunny
 
   <p align="center"> <img align = "center" src= "https://github.com/ksskreddy/Graphics-Project/blob/master/assets/images/bunny.gif" title = "Scene with bunny"></p>
  
-### Scene with plane
+### Scene with Plane
 
   <p align="center"> <img align = "center" src= "https://github.com/ksskreddy/Graphics-Project/blob/master/assets/images/plane.gif" title = "Scene with plane"></p>
 
