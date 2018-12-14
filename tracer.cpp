@@ -4,6 +4,7 @@
  * Functions to rotate a point around origin
  */
 
+//Rotate vector along x axis
 Vec3f rotateX(Vec3f p, double theta){
     Vec3f ans;
 	ans.y = cos(theta)*p.y - sin(theta)*p.z;
@@ -12,6 +13,7 @@ Vec3f rotateX(Vec3f p, double theta){
 	return ans;
 }
 
+//Rotate vector along y axis
 Vec3f rotateY(Vec3f p, double theta){
 	Vec3f ans;
 	ans.x = cos(theta)*p.x + sin(theta)*p.z;
@@ -20,6 +22,7 @@ Vec3f rotateY(Vec3f p, double theta){
 	return ans;
 }
 
+//Rotate vector along Z-axis
 Vec3f rotateZ(Vec3f p, double theta){
 	Vec3f ans;
 	ans.x = cos(theta)*p.x - sin(theta)*p.y;
@@ -59,15 +62,20 @@ mesh::mesh(string objfile, color col, Vec3f cen, double scale_factor){
     num_vertices = 0;
     num_faces = 0;
     centre = cen;
+	
+    //reading the input from obj file
     while(getline(objstream,line)){
         if(line.c_str()[0] == '#')
             continue;
         
+	//reading vertices of the triangulated objects
         if(line.c_str()[0] == 'v' && line.c_str()[1] == ' '){
             stringstream s(line);
             Vec3f vertex;
             char tmp;
             s >> tmp >> vertex.x >> vertex.y >> vertex.z;
+		
+	    //scaling the scene for better appearance
             vertex.x *= scale_factor;
             vertex.y *= scale_factor;
             vertex.z *= scale_factor;
@@ -80,7 +88,7 @@ mesh::mesh(string objfile, color col, Vec3f cen, double scale_factor){
             vertices.push_back(vertex);
             
         }
-
+        // Reading the face details of the mesh
         if(line.c_str()[0] == 'f' && line.c_str()[1] == ' '){
             stringstream s(line);
             int a, b, c;
@@ -283,7 +291,7 @@ void NormaliseV(){
             it = hsImap.find(key);
             
             hsvraster[i][j][2] = hsvraster[i][j][2]/it->second;
-
+            //Converts HSV to RGB color codes
             HSVtoRGB(fR,fG,fB,hsvraster[i][j][0],hsvraster[i][j][1],hsvraster[i][j][2]);
             raster[i][j][0] = ((int)(fR * 255));
             raster[i][j][1] = ((int)(fG * 255));
@@ -292,6 +300,11 @@ void NormaliseV(){
     }
 }
 
+/**
+* This will calculate the illumination at a point by taking into account 
+* diffusion,specular,ambient and shadow details.
+* This is used for calculating illuminations of walls
+*/
 double illuminatePoint(Vec3f &pt, Vec3f &cam, Vec3f &light,int faceInd, mesh &parent_mesh){
     double ambient = Ka * Ia;
     Vec3f n = parent_mesh.faces[faceInd].n;
@@ -314,6 +327,11 @@ double illuminatePoint(Vec3f &pt, Vec3f &cam, Vec3f &light,int faceInd, mesh &pa
 
 }
 
+/**
+* This will calculate the illumination at a point by taking into account 
+* diffusion,specular,ambient and shadow details.
+* This is used for calculating illuminations of objects other than walls.
+*/
 double illuminatePoint(Vec3f &pt, Vec3f &cam, Vec3f &light,int faceInd, int meshIndex, vector<mesh> &meshes){
     double ambient = Ka * Ia;
     Vec3f n = meshes[meshIndex].faces[faceInd].n;
@@ -484,6 +502,7 @@ Vec3f IntersectionPoint(Vec3f pix, Vec3f cam, int k, mesh &parent_mesh){
     Vec3f pt = cam + (pix - cam)*t;
     return pt;
 }
+
 
 void raycast(mesh &mymesh,Vec3f cam, Vec3f light, string &filename){
     bool visible_faces[mymesh.num_faces];
