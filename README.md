@@ -3,6 +3,8 @@
 ## Overview
 
   Projection and animation of arbitrary number of objects given in obj format using a computer graphics technique called "Ray casting" to make them look realistic.
+  
+  Refer the documentation for more details https://ksskreddy.github.io/RayTracing-on-Triangle-Meshes/
 
  ## Specifications
   
